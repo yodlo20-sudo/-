@@ -2,53 +2,123 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ULTIMATE OSINT MONITOR v8.0</title>
+    <title>OVERLORD OSINT v10.0 | STRATEGIC COMMAND</title>
     <style>
-        :root { --red: #ff0000; --cyan: #00f2ff; --bg: #020204; --panel: rgba(10, 10, 15, 0.9); --gold: #ffd700; }
-        body, html { margin: 0; padding: 0; background: var(--bg); color: #fff; font-family: 'Courier New', monospace; height: 100vh; overflow: hidden; }
+        :root { --p-red: #ff003c; --p-cyan: #00f2ff; --p-purple: #bc00ff; --bg: #010103; --glass: rgba(15, 15, 25, 0.85); --accent: #00ff41; }
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', 'Consolas', monospace; height: 100vh; overflow: hidden; }
         
-        /* Background Effects */
-        .bg-grid { position: fixed; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px); background-size: 30px 30px; z-index: -1; }
-        .scanlines { position: fixed; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; z-index: 1000; pointer-events: none; }
+        /* Tactical Overlays */
+        .hud-overlay { position: fixed; inset: 0; border: 20px solid transparent; border-image: radial-gradient(circle, transparent 70%, rgba(0, 242, 255, 0.05) 100%) 20; pointer-events: none; z-index: 100; }
+        .radar-grid { position: fixed; inset: 0; background-image: linear-gradient(var(--p-cyan) 1px, transparent 1px), linear-gradient(90deg, var(--p-cyan) 1px, transparent 1px); background-size: 50px 50px; opacity: 0.03; z-index: -1; }
+        .scan-line { position: fixed; width: 100%; height: 100px; background: linear-gradient(to bottom, transparent, rgba(0, 242, 255, 0.1), transparent); animation: scan 6s linear infinite; z-index: 99; pointer-events: none; }
+        @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
 
-        /* Header */
-        header { height: 60px; background: #000; border-bottom: 2px solid var(--red); display: flex; align-items: center; padding: 0 20px; justify-content: space-between; box-shadow: 0 0 15px var(--red); }
-        .system-status { display: flex; align-items: center; gap: 20px; }
-        .led { width: 10px; height: 10px; background: #0f0; border-radius: 50%; box-shadow: 0 0 10px #0f0; animation: blink 0.5s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } }
-
-        /* Main Layout */
-        .container { display: grid; grid-template-columns: 350px 1fr 380px; grid-template-rows: 1fr 200px; height: calc(100vh - 100px); gap: 10px; padding: 10px; }
+        /* UI Layout */
+        .app-wrapper { display: grid; grid-template-columns: 350px 1fr 1fr 350px; grid-template-rows: 60px 1fr 250px 40px; height: 100vh; gap: 8px; padding: 8px; }
+        header { grid-column: span 4; background: #000; border: 1px solid #333; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; border-left: 5px solid var(--p-red); }
         
-        .panel { background: var(--panel); border: 1px solid #333; position: relative; display: flex; flex-direction: column; backdrop-filter: blur(5px); }
-        .panel-header { background: #1a1a1a; padding: 8px; font-size: 12px; font-weight: bold; border-bottom: 1px solid var(--cyan); color: var(--cyan); display: flex; justify-content: space-between; }
-
-        /* Specific Sections */
-        .main-feed { grid-row: span 2; }
-        iframe { width: 100%; height: 100%; border: none; filter: contrast(1.2) brightness(0.8) hue-rotate(-10deg); }
+        .panel { background: var(--glass); border: 1px solid #222; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; position: relative; backdrop-filter: blur(10px); }
+        .panel-h { background: rgba(255,255,255,0.03); padding: 8px 12px; font-size: 11px; font-weight: bold; border-bottom: 1px solid #333; color: var(--p-cyan); display: flex; justify-content: space-between; text-transform: uppercase; }
         
-        .news-item { padding: 12px; border-bottom: 1px solid #222; transition: 0.3s; cursor: pointer; text-decoration: none; color: inherit; display: block; }
-        .news-item:hover { background: rgba(0, 242, 255, 0.1); border-left: 4px solid var(--cyan); }
-        .priority-high { border-right: 4px solid var(--red); background: rgba(255, 0, 0, 0.05); }
-        .source-tag { font-size: 9px; color: var(--gold); border: 1px solid var(--gold); padding: 1px 4px; border-radius: 3px; }
+        /* News Center */
+        .news-container { grid-column: span 2; }
+        .stream { overflow-y: auto; flex-grow: 1; padding: 10px; scrollbar-width: thin; }
+        .card { background: rgba(255,255,255,0.02); border-right: 4px solid var(--p-cyan); margin-bottom: 10px; padding: 15px; transition: 0.2s; text-decoration: none; color: inherit; display: block; position: relative; }
+        .card:hover { background: rgba(0, 242, 255, 0.08); transform: scale(1.01); }
+        .card.hot { border-right-color: var(--p-red); background: rgba(255,0,0,0.05); }
+        .card h3 { margin: 0 0 8px 0; font-size: 15px; line-height: 1.4; }
+        
+        /* Components */
+        iframe { width: 100%; height: 100%; border: none; filter: brightness(0.8) contrast(1.2) hue-rotate(-5deg); }
+        .stat-box { display: flex; gap: 15px; align-items: center; }
+        .led { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 
         /* Ticker */
-        .ticker-wrap { position: fixed; bottom: 0; width: 100%; background: #000; height: 40px; border-top: 2px solid var(--cyan); overflow: hidden; display: flex; align-items: center; }
-        .ticker { white-space: nowrap; animation: ticker 60s linear infinite; display: flex; gap: 50px; }
+        footer { grid-column: span 4; background: #000; border-top: 1px solid var(--p-red); display: flex; align-items: center; overflow: hidden; font-family: monospace; font-size: 12px; }
+        .ticker-move { white-space: nowrap; animation: ticker 50s linear infinite; }
         @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-
-        /* Controls */
-        .search-bar { background: #111; padding: 10px; display: flex; gap: 10px; border-bottom: 1px solid #333; }
-        input { background: #000; border: 1px solid var(--cyan); color: var(--cyan); padding: 5px; flex-grow: 1; }
         
-        #log { font-size: 10px; color: #0f0; overflow-y: auto; padding: 10px; flex-grow: 1; line-height: 1.5; }
+        #console { font-size: 10px; color: var(--accent); padding: 10px; overflow-y: auto; height: 100%; line-height: 1.4; background: #000; }
     </style>
 </head>
 <body>
 
-<div class="bg-grid"></div>
-<div class="scanlines"></div>
+<div class="hud-overlay"></div>
+<div class="radar-grid"></div>
+<div class="scan-line"></div>
 
-<header>
-    <div class="system-status">
-        <div class="led"></div>
+<div class="app-wrapper">
+    <header>
+        <div class="stat-box">
+            <div class="led"></div>
+            <span style="letter-spacing: 3px; font-weight: 900;">OVERLORD STRATEGIC v10.0</span>
+        </div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <input type="text" id="target" value="איראן" style="background:#000; border:1px solid var(--p-cyan); color:var(--p-cyan); padding:5px 15px; border-radius:20px; outline:none; width:250px;">
+            <button onclick="reboot()" style="background:var(--p-red); border:none; color:white; padding:5px 20px; cursor:pointer; font-weight:bold; border-radius:20px;">UPDATE HUB</button>
+        </div>
+        <div id="clock" style="font-size:24px; font-weight:bold; color:var(--p-red); font-family:monospace;">00:00:00</div>
+    </header>
+
+    <div class="panel">
+        <div class="panel-h">Market Intelligence</div>
+        <div style="height:200px;"><iframe src="https://www.widgets.investing.com/live-commodities-charts?theme=darkTheme&pairs=8833,8830,1057391"></iframe></div>
+        <div class="panel-h">Seismic Monitoring ($M > 2.5$)</div>
+        <iframe src="https://earthquake.usgs.gov/earthquakes/map/"></iframe>
+    </div>
+
+    <div class="panel news-container">
+        <div class="panel-h">
+            <span>Primary Intelligence Stream</span>
+            <span id="vel-meter" style="color:var(--accent);">Velocity: Stable</span>
+        </div>
+        <div id="stream" class="stream"></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-h">Tactical Air Support</div>
+        <div style="height:50%;"><iframe src="https://globe.adsbexchange.com/?lat=32.42&lon=53.68&zoom=5&hideSidebar&hideButtons"></iframe></div>
+        <div class="panel-h">Satellite Thermal Anomalies</div>
+        <iframe src="https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@53.0,32.0,5z"></iframe>
+    </div>
+
+    <div class="panel" style="grid-column: span 2;">
+        <div class="panel-h">Social/Telegram SIGINT</div>
+        <iframe src="https://tgwidget.com/channel/v2/abualiexpress/"></iframe>
+    </div>
+    <div class="panel" style="grid-column: span 2;">
+        <div class="panel-h">Unified System Logs</div>
+        <div id="console"></div>
+    </div>
+
+    <footer>
+        <div class="ticker-move" id="ticker">CONNECTING TO GLOBAL INTELLIGENCE NODES... ESTABLISHING SECURE HANDSHAKE... SCANNING FREQUENCIES...</div>
+    </footer>
+</div>
+
+<script>
+    let currentTarget = "איראן";
+    const consoleEl = document.getElementById('console');
+
+    function log(msg, type='info') {
+        const div = document.createElement('div');
+        const color = type === 'urgent' ? 'var(--p-red)' : 'var(--accent)';
+        div.innerHTML = `<span style="color:#555">[${new Date().toLocaleTimeString()}]</span> <span style="color:${color}">> ${msg}</span>`;
+        consoleEl.prepend(div);
+    }
+
+    function reboot() {
+        currentTarget = document.getElementById('target').value;
+        log(`REBOOTING CORE... TARGET SET TO: ${currentTarget.toUpperCase()}`, 'urgent');
+        fetchIntel();
+    }
+
+    setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL'), 1000);
+
+    async function fetchIntel() {
+        const sources = [
+            'https://www.ynet.co.il/Integration/StoryRss2.xml',
+            'https://rss.walla.co.il/feed/1',
+            'https://www.aljazeera.com/xml/rss/all.xml',
+            '
