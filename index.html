@@ -2,100 +2,148 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>STRATEGIC COMMAND CENTER | IRAN MONITOR</title>
+    <title>TACTICAL MONITOR v6.0</title>
     <style>
-        :root { --danger: #ff3e3e; --bg: #050505; --card: #111113; --border: #2d2d2d; --text: #e1e1e1; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow: hidden; height: 100vh; }
-        .header { background: #000; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--danger); height: 50px; }
-        .dashboard { display: grid; grid-template-columns: 320px 1fr 320px; height: calc(100vh - 52px); gap: 5px; padding: 5px; box-sizing: border-box; }
+        :root { --danger: #ff3e3e; --bg: #050505; --card: #121214; --border: #2d2d2d; --accent: #00ff41; }
+        body { font-family: 'Consolas', 'Segoe UI', sans-serif; background: var(--bg); color: #e1e1e1; margin: 0; padding: 0; overflow: hidden; }
+        
+        /* Header & Scanner Animation */
+        .header { background: #000; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--danger); height: 60px; }
+        .scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: rgba(255, 62, 62, 0.2); animation: scan 4s linear infinite; z-index: 1000; pointer-events: none; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100vh; } }
+
+        /* Tactical Controls */
+        .controls { display: flex; gap: 10px; align-items: center; background: #111; padding: 5px 20px; border-bottom: 1px solid var(--border); }
+        input { background: #000; border: 1px solid var(--border); color: var(--accent); padding: 5px 10px; border-radius: 3px; outline: none; }
+        button { background: var(--danger); color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 3px; font-weight: bold; }
+        button:hover { opacity: 0.8; }
+
+        /* Dashboard Grid */
+        .dashboard { display: grid; grid-template-columns: 350px 1fr 350px; height: calc(100vh - 100px); gap: 5px; padding: 5px; }
         .column { display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
-        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
-        .panel-header { background: #1a1a1a; padding: 8px 12px; font-size: 12px; font-weight: bold; border-bottom: 1px solid var(--border); color: #aaa; }
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { background: #1a1a1a; padding: 8px; font-size: 11px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; color: #888; }
+        
+        .scroll { overflow-y: auto; padding: 10px; flex-grow: 1; }
+        .news-box { background: #18181b; border: 1px solid #222; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: block; text-decoration: none; color: inherit; border-right: 3px solid var(--danger); transition: 0.2s; }
+        .news-box:hover { border-color: var(--accent); background: #1f1f23; }
+        .source-label { font-size: 9px; color: var(--danger); font-weight: bold; margin-bottom: 3px; }
+        
         iframe { border: none; width: 100%; height: 100%; background: #000; }
-        .scroll { overflow-y: auto; padding: 10px; flex-grow: 1; font-size: 13px; }
-        .news-box { background: #1a1a1c; border: 1px solid #222; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: block; text-decoration: none; color: inherit; border-right: 3px solid var(--danger); }
-        .news-box:hover { background: #222; }
-        .tag { font-size: 9px; font-weight: bold; color: var(--danger); margin-bottom: 4px; }
+        #console { background: #000; color: var(--accent); font-family: 'Courier New', monospace; font-size: 11px; height: 120px; padding: 10px; border-top: 1px solid #333; overflow-y: auto; }
     </style>
 </head>
 <body>
 
+<div class="scanner-line"></div>
+
 <div class="header">
-    <div style="display:flex; align-items:center; gap:15px;">
-        <h1 style="margin:0; font-size: 18px;">COMMAND CENTER | OSINT HUB</h1>
-        <div style="color:var(--danger); font-size:12px; font-weight:bold;">● LIVE MONITORING</div>
-    </div>
-    <div id="clock" style="font-family:monospace; font-size:18px; color:var(--danger);">00:00:00</div>
+    <h1 style="margin:0; font-size: 20px; letter-spacing: 2px;">TACTICAL OSINT MONITOR</h1>
+    <div id="clock" style="font-size: 20px; font-weight: bold;">00:00:00</div>
+</div>
+
+<div class="controls">
+    <span>מטרת חיפוש:</span>
+    <input type="text" id="targetInput" placeholder="הכנס מילת מפתח..." value="איראן">
+    <button onclick="applyTarget()">עדכן מטרה</button>
+    <button onclick="manualRefresh()" style="background:#333">רענן כעת ↻</button>
 </div>
 
 <div class="dashboard">
     <div class="column">
-        <div class="panel" style="height: 250px; flex-grow:0;">
-            <div class="panel-header">📈 שווקים (נפט/זהב/ביטקוין)</div>
+        <div class="panel" style="height: 200px; flex-grow:0;">
+            <div class="panel-header">STOCK & CRYPTO INDICATORS</div>
             <iframe src="https://www.widgets.investing.com/live-commodities-charts?theme=darkTheme&pairs=8833,8830,1057391"></iframe>
         </div>
         <div class="panel">
-            <div class="panel-header">🇮🇱 פיד ישראל - זמן אמת</div>
-            <div id="il-feed" class="scroll">סורק מקורות ישראליים...</div>
+            <div class="panel-header"><span>IL FEED</span> <span id="il-count">0</span></div>
+            <div id="il-feed" class="scroll"></div>
         </div>
     </div>
 
     <div class="column">
         <div class="panel" style="height: 60%;">
-            <div class="panel-header">✈️ ניטור תעופה (ADSB Exchange)</div>
+            <div class="panel-header">LIVE AIR TRAFFIC (ADSB)</div>
             <iframe src="https://globe.adsbexchange.com/?lat=32.42&lon=53.68&zoom=5&hideSidebar&hideButtons"></iframe>
         </div>
         <div class="panel">
-            <div class="panel-header">🌍 פיד עולמי (OSINT)</div>
-            <div id="world-feed" class="scroll">סורק מקורות בינלאומיים...</div>
+            <div class="panel-header">GLOBAL OSINT FEED</div>
+            <div id="world-feed" class="scroll"></div>
         </div>
     </div>
 
     <div class="column">
         <div class="panel">
-            <div class="panel-header">🔹 טלגרם - ערוץ מודיעין</div>
+            <div class="panel-header">INTEL TELEGRAM</div>
             <iframe src="https://tgwidget.com/channel/v2/abualiexpress/"></iframe>
         </div>
-        <div class="panel" style="height: 100px; flex-grow:0; background:#000; color:#0f0; font-family:monospace; padding:10px; font-size:11px; border-top: 2px solid #222;">
-            >> SYSTEM STATUS: ONLINE<br>
-            >> SCANNING REGION: MIDDLE EAST<br>
-            <div id="console-log">>> WAITING FOR DATA...</div>
-        </div>
+        <div id="console">>> INITIALIZING SYSTEM...</div>
     </div>
 </div>
 
 <script>
-    // עדכון שעון
+    let currentTarget = localStorage.getItem('osint_target') || 'איראן';
+    document.getElementById('targetInput').value = currentTarget;
+
+    function applyTarget() {
+        currentTarget = document.getElementById('targetInput').value;
+        localStorage.setItem('osint_target', currentTarget);
+        addLog(`TARGET UPDATED: ${currentTarget}`);
+        updateFeeds();
+    }
+
+    function manualRefresh() {
+        addLog("MANUAL REFRESH INITIATED...");
+        updateFeeds();
+    }
+
+    function addLog(msg) {
+        const con = document.getElementById('console');
+        con.innerHTML = `> [${new Date().toLocaleTimeString()}] ${msg}<br>` + con.innerHTML;
+        // צליל התראה טכנולוגי קצר
+        if(window.AudioContext) {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.value = 800; gain.gain.value = 0.05;
+            osc.start(); osc.stop(ctx.currentTime + 0.1);
+        }
+    }
+
     setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL'), 1000);
 
     async function updateFeeds() {
-        // ישראל (Ynet RSS)
+        // ישראל
         try {
             const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.ynet.co.il/Integration/StoryRss2.xml')}`);
             const data = await res.json();
-            const items = data.items.filter(i => (i.title + i.description).includes('איראן'));
-            document.getElementById('il-feed').innerHTML = items.length ? items.map(i => `
+            const filtered = data.items.filter(i => (i.title + i.description).includes(currentTarget));
+            document.getElementById('il-count').innerText = filtered.length;
+            document.getElementById('il-feed').innerHTML = filtered.map(i => `
                 <a href="${i.link}" target="_blank" class="news-box">
-                    <div class="tag">YNET / OSINT</div> ${i.title}
+                    <div class="source-label">YNET / ISRAEL</div>
+                    ${i.title}
                 </a>
-            `).join('') : "אין דיווחים חדשים כרגע.";
-        } catch(e) { }
+            `).join('');
+        } catch(e) {}
 
-        // עולם (Al Jazeera RSS כחלופה ל-NewsAPI החסום)
+        // עולם
         try {
             const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.aljazeera.com/xml/rss/all.xml')}`);
             const data = await res.json();
-            const items = data.items.filter(i => i.title.toLowerCase().includes('iran'));
-            document.getElementById('world-feed').innerHTML = items.length ? items.map(i => `
+            const filtered = data.items.filter(i => i.title.toLowerCase().includes(currentTarget.toLowerCase()));
+            document.getElementById('world-feed').innerHTML = filtered.map(i => `
                 <a href="${i.link}" target="_blank" class="news-box">
-                    <div class="tag">GLOBAL NEWS</div> ${i.title}
+                    <div class="source-label">GLOBAL / OSINT</div>
+                    ${i.title}
                 </a>
-            `).join('') : "Scanning global sources...";
-        } catch(e) { }
+            `).join('');
+        } catch(e) {}
     }
 
     updateFeeds();
-    setInterval(updateFeeds, 120000); // רענון כל 2 דקות
+    setInterval(updateFeeds, 180000);
 </script>
 </body>
 </html>
